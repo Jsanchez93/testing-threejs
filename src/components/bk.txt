@@ -1,0 +1,68 @@
+const gui = new dat.GUI()
+gui
+  .add(DL, 'intensity')
+  .min(0)
+  .max(10)
+  .step(0.5)
+  .name('Light intensity')
+const DLaux = {
+  color: 'rgb(255, 255, 255)',
+  color2: 0xffffff,
+}
+gui
+  .add(DLaux, 'color', {
+    white: 'rgb(255, 255, 255)',
+    green: 'rgb(0, 255, 0)',
+    red: 'rgb(255, 0, 0)',
+    blue: 'rgb(0, 0, 255)',
+  })
+  .name('Light color')
+  .onFinishChange(() => {
+    DL.color = new THREE.Color(DLaux.color)
+  })
+gui
+  .addColor(DLaux, 'color2')
+  .name('Light color 2')
+  .onFinishChange(() => {
+    DL.color = new THREE.Color(DLaux.color2)
+  })
+
+
+// CUBE
+const textureLoader = new THREE.TextureLoader()
+// grass Material
+const grassMap = textureLoader.load('./assets/grass/Grass_001_COLOR.jpg')
+const grassAoMap = textureLoader.load('./assets/grass/Grass_001_OCC.jpg')
+const grassRoughnessMap = textureLoader.load('./assets/grass/Grass_001_ROUGH.jpg')
+const grassNormalMap = textureLoader.load('./assets/grass/Grass_001_NORM.jpg')
+const grassDisplacementMap = textureLoader.load('./assets/grass/Grass_001_DISP.png')
+const grassMaterial = new THREE.MeshStandardMaterial({
+  map: grassMap,
+  aoMap: grassAoMap,
+  roughnessMap: grassRoughnessMap,
+  normalMap: grassNormalMap,
+  displacementMap: grassDisplacementMap,
+  displacementScale: 0.0001,
+})
+// dirt Material
+const dirtMap = textureLoader.load('./assets/dirt/Concrete_Muddy_001_BaseColor.jpg')
+const dirtAoMap = textureLoader.load('./assets/dirt/Concrete_Muddy_001_AmbientOcclusion.jpg')
+const dirtRoughnessMap = textureLoader.load('./assets/dirt/Concrete_Muddy_001_Roughness.jpg')
+const dirtNormalMap = textureLoader.load('./assets/dirt/Concrete_Muddy_001_Normal.jpg')
+const dirtDisplacementMap = textureLoader.load('./assets/dirt/Concrete_Muddy_001_Height.png')
+const dirtMaterial = new THREE.MeshStandardMaterial({
+  map: dirtMap,
+  aoMap: dirtAoMap,
+  roughnessMap: dirtRoughnessMap,
+  normalMap: dirtNormalMap,
+  displacementMap: dirtDisplacementMap,
+  displacementScale: 0,
+})
+
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(1.4, 1, 1.4),
+  [dirtMaterial, dirtMaterial, grassMaterial, dirtMaterial, dirtMaterial, dirtMaterial]
+)
+cube.position.set(0, 0, 0)
+cube.scale.y = 0.4
+scene.add(cube)
