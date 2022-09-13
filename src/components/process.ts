@@ -52,18 +52,38 @@ const AO = new THREE.AmbientLight(0xffffff, 1.0)
 // Raycaster
 const raycaster = new THREE.Raycaster()
 const pointer = new THREE.Vector2(-100, -100)
+let count = 0
+let interval: NodeJS.Timeout
+const handlePointerDown = (event: globalThis.MouseEvent) => {
+  event.preventDefault()  
+  interval = setInterval(() => count += 100, 100)
+}
+const handlePointerUp = (event: globalThis.MouseEvent) => {
+  event.preventDefault()
+  if (count < 500) {
+    raycaster.setFromCamera( pointer, camera )
+    const intersects = raycaster.intersectObjects( scene.children, true )
+    if(intersects.length > 0) {
+      const current = intersects[0].object.parent
+      alert(`${current?.name}: ${JSON.stringify(current?.userData)}`)
+    }
 
-const onPointerMove = (event: any) => {
+  }
+  clearInterval(interval)
+  count = 0
+}
+const handleMove = (event: globalThis.MouseEvent) => {
 	// calculate pointer position in normalized device coordinates
 	// (-1 to +1) for both components
-	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1
+	pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1
 
   raycaster.setFromCamera( pointer, camera )
   const intersects = raycaster.intersectObjects( scene.children, true )
   if(intersects.length > 0) {
-    const current = intersects[0].object.parent
-    alert(`mostrar modal para: ${JSON.stringify(current?.userData)}`)
+    document.body.style.cursor = 'pointer'
+  } else {
+    document.body.style.cursor = 'initial'
   }
 }
 
@@ -74,8 +94,9 @@ const animate = () => {
   requestAnimationFrame(animate)
 }
 animate()
-
-window.addEventListener('click', onPointerMove)
+window.addEventListener('pointerdown', handlePointerDown)
+window.addEventListener('pointerup', handlePointerUp)
+window.addEventListener('pointermove', handleMove)
 
 // cast and receive shadows
 const castAndReceiveShadows = () => {
@@ -179,5 +200,3 @@ export const cleanup = (cont: HTMLDivElement) => {
   scene.clear()
   cont.removeChild(renderer.domElement)
 }
-
-console.log(renderer.info);
