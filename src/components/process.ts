@@ -10,8 +10,8 @@ let ref: HTMLDivElement
 // camera and scene
 const scene = new THREE.Scene()
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 1000)
-camera.position.z = 70
-camera.position.x = -20
+camera.position.z = 110
+camera.position.x = -50
 scene.add(camera)
 scene.background = new THREE.Color(0x6ee46e)
 
@@ -28,9 +28,9 @@ renderer.setPixelRatio(2)
 
 // Controls
 const controls = new OrbitControls(camera, renderer.domElement)
-controls.target = new THREE.Vector3(13, 2, 13)
+controls.target = new THREE.Vector3(0, 0, 0)
 controls.enableDamping = true
-controls.maxPolarAngle = 1.2
+controls.maxPolarAngle = 1.1
 controls.minDistance = 30
 controls.maxDistance = 120
 controls.update()
@@ -110,13 +110,13 @@ const castAndReceiveShadows = () => {
 
 const addLights = (quantity: number) => {
   DL.position.set(0, 30, 0)
-  const aux = 1.5
+  const aux = quantity >= 18 ? 1.2 : 5
   DL.shadow.camera.left = -(aux * quantity)
   DL.shadow.camera.right = aux * quantity
   DL.shadow.camera.top = aux * quantity
   DL.shadow.camera.bottom = -(aux * quantity)
-  DL.shadow.mapSize.x = 1024
-  DL.shadow.mapSize.y = 1024
+  DL.shadow.mapSize.x = quantity < 96 ? 1024 : 2048
+  DL.shadow.mapSize.y = quantity < 96 ? 1024 : 2048
 
   scene.add(DL)
   // scene.add(new THREE.CameraHelper(DL.shadow.camera))
@@ -124,51 +124,84 @@ const addLights = (quantity: number) => {
 }
 
 const addTrees = (gltf: GLTF, quantity: number) => {
+  const baseSize = 6.5
+  let radius = 3
+  let limit = 7 // first iteration
+  let currentWall = 'top'
+  let auxLimit = -3
   const trees = new THREE.Group()
   const model = gltf.scene
 
-  for (let i = 0; i < quantity; i+=1) {
+  let sum = 1
+  let count = 1
+  for (let i = 1; i <= quantity; i+=1) {
     const newTree = model.clone()
     newTree.name = `ARBOL NUMERO ${i + 1}`
-    newTree.userData = {
-      name: 'Juan Sanchez',
-      model: 'Tesla',
-      date: '15/02/2022',
+    newTree.userData = { name: 'Juan Sanchez', model: 'Tesla', date: '15/02/2022' }
+
+    if (auxLimit === radius) {
+      sum = -1
+    } else if (auxLimit === -radius) {
+      sum = 1
     }
 
-    if (i >= 0 && i <= 4) {
-      newTree.position.set(i * 6.5, 0, 0)
-    } else if (i >= 5 && i <= 9) {
-      newTree.position.set((i-5) * 6.5, 0, 6.5)
-    } else if (i >= 10 && i <= 14) {
-      newTree.position.set((i-10) * 6.5, 0, 13)
-    } else if (i >= 15 && i <= 19) {
-      newTree.position.set((i-15) * 6.5, 0, 19.5)
-    } else if (i >= 20 && i <= 24) {
-      newTree.position.set((i-20) * 6.5, 0, 26)
+    if (currentWall === 'top') {
+      newTree.position.set(baseSize * auxLimit, 0, baseSize * -radius)
+      if (count === limit) {
+        currentWall = 'bottom'
+        count = 0
+      }
     }
-    
+    if (currentWall === 'bottom') {
+      newTree.position.set(baseSize * auxLimit, 0, baseSize * radius)
+      if (count === limit - 1) {
+        currentWall = 'right'
+        count = 0
+      }
+    }
+    if (currentWall === 'right') {
+      newTree.position.set(baseSize * radius, 0, baseSize * auxLimit)
+      if (count === limit - 1) {
+        currentWall = 'left'
+        count = 0
+      }
+    }
+    if (currentWall === 'left') {
+      newTree.position.set(baseSize * -radius, 0, baseSize * auxLimit)
+      if (count === limit - 2) {
+        currentWall = 'top'
+        count = 0
+        radius += 1
+        limit += 2
+        auxLimit += sum
+        
+      }
+    }
+
+    auxLimit += sum
+    count += 1
     trees.add(newTree)
   }  
   scene.add(trees)
 
-  /*
+
   const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(5, 5, 5),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    new THREE.BoxGeometry(32.5, 2, 32.5),
+    new THREE.MeshBasicMaterial({ color: 0x007ba9 })
   )
-  cube.position.y = 23
+  cube.position.y = -1
   scene.add(cube)
+  /*
   gui
     .add(cube.position, 'x')
     .min(0)
     .max(50)
     .step(0.5)
-  gui
+  gui 
     .add(cube.position, 'y')
-    .min(0)
+    .min(-10)
     .max(50)
-    .step(0.5)
+    .step(0.1)
   gui
     .add(cube.position, 'z')
     .min(0)
@@ -185,7 +218,7 @@ const gltfLoader = new GLTFLoader()
 gltfLoader.load(
   './assets/TreeSample_GLTF/Tree_Sample.gltf',
   gltf => {
-    addTrees(gltf, 25)
+    addTrees(gltf, 336)
   },
 )
 
