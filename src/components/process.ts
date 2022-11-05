@@ -7,6 +7,7 @@ import { gsap, Power2 } from 'gsap'
 import { Modal } from 'bootstrap'
 
 import { Ilist } from '../types'
+import { mobileAndTabletCheck } from '../common/functions'
 
 import list from './example.json'
 
@@ -65,8 +66,7 @@ const SL = new THREE.SpotLight(0xffffff, 20, 20, Math.PI / 12)
 SL.position.set(0, 20, 0)
 
 // Modal content
-const renderInfo = (info: Ilist) => {
-  console.log(info)
+export const renderInfo = (info: Ilist) => {
   const nameModal = document.getElementById('info-modal-name') as HTMLElement
   const dateModal = document.getElementById('info-modal-date') as HTMLElement
   const modelModal = document.getElementById('info-modal-model') as HTMLElement
@@ -75,6 +75,7 @@ const renderInfo = (info: Ilist) => {
   dateModal.innerText = info.date
   modelModal.innerText = info.model
 
+  focusTree(info)
   modal.show()
 }
 
@@ -86,21 +87,19 @@ let interval: NodeJS.Timeout
 const handlePointerDown = () => {
   interval = setInterval(() => count += 100, 100)
 }
-const handlePointerUp = (event: globalThis.MouseEvent) => {
-  event.preventDefault()
-
+const handlePointerUp = (event: globalThis.MouseEvent | globalThis.TouchEvent) => {
   if (count < 200 && get('target.tagName', event) === 'CANVAS') {
     raycaster.setFromCamera( pointer, camera )
     const intersects = raycaster.intersectObjects( scene.children, true )
     if(intersects.length > 0) {
       const userData = intersects[0].object.parent?.userData
-      if (!isEmpty(userData)) {
+      if (!isEmpty(userData) && userData.name !== 'Ground_Base') {
         renderInfo(userData as Ilist)
       }
     }
 
   }
-  clearInterval(interval)
+  window.clearInterval(interval)
   count = 0
 }
 const handleMove = (event: globalThis.MouseEvent) => {
@@ -125,9 +124,12 @@ const animate = () => {
   requestAnimationFrame(animate)
 }
 animate()
-window.addEventListener('pointerdown', handlePointerDown)
-window.addEventListener('pointerup', handlePointerUp)
-window.addEventListener('pointermove', handleMove)
+
+if (!mobileAndTabletCheck()) {
+  window.addEventListener('pointerdown', handlePointerDown)
+  window.addEventListener('pointerup', handlePointerUp)
+  window.addEventListener('pointermove', handleMove)
+}
 
 // cast and receive shadows
 const castAndReceiveShadows = () => {
@@ -260,8 +262,6 @@ export const focusTree = (item: Ilist) => {
   scene.traverse( obj => {
     const { type, name } = obj    
     if (type === 'Group' && name === `Tree-${item.id}`) {
-      console.log(obj.position);
-      
       timeline.to(camera.position, {
         x: obj.position.x,
         z: obj.position.z,

@@ -42,27 +42,6 @@ export const SearchContainer = styled.form`
       border-left-width: 0;
     }
   }
-  & ul {
-    background-color: white;
-    border-radius: 0 0 5px 5px;
-    display: flex;
-    flex-wrap: wrap;
-    list-style: none;
-    margin: 0;
-    max-width: 331px;
-    padding: 0;
-    width: 100%;
-    & li {
-      padding: 6px 10px;
-      transition: background-color 0.1s linear;
-      width: 100%;
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-        transition: background-color 0.1s linear;
-      }
-    }
-  }
 `
 
 export const ModalBody = styled.div`
@@ -77,5 +56,33 @@ export const ModalBody = styled.div`
     position: absolute;
     right: 10px;
     top: 5px;
+  }
+`
+
+export const SearchResult = styled.div`
+  background-color: white;
+  border-radius: 0 0 5px 5px;
+  height: auto;
+  max-height: calc(100vh - 120px);
+  max-width: 345px;
+  overflow-y: auto;
+  width: 100%;
+  & ul {  
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    & li {
+      padding: 6px 10px;
+      transition: background-color 0.1s linear;
+      width: 100%;
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: background-color 0.1s linear;
+      }
+    }
   }
 `

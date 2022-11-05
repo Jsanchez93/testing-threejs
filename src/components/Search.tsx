@@ -2,10 +2,10 @@ import React, { useState } from 'react'
 import { MdSearch } from 'react-icons/md'
 
 import { Ilist } from '../types'
-import { searchObj } from '../common/functions'
+import { searchObj, mobileAndTabletCheck } from '../common/functions'
 
-import { focusTree } from './process'
-import { SearchContainer } from './style'
+import { focusTree, renderInfo } from './process'
+import { SearchContainer, SearchResult } from './style'
 
 import list from './example.json'
 
@@ -44,21 +44,27 @@ export const Search: React.FC = () => {
         </button>
       </div>
       <span className="helper" />
-      <ul>
-        {result.map(el => (
-          <li
-            key={el.id}
-            onClick={ev => {
-              ev.stopPropagation()
-              focusTree(el)
-              setString(el.name)
-              setResult([])
-            }}
-          >
-            {el.name}-{el.date}
-          </li>
-        ))}
-      </ul>
+      
+      <SearchResult>
+        <ul>
+          {result.map(el => (
+            <li
+              key={el.id}
+              onClick={ev => {
+                ev.stopPropagation()
+                focusTree(el)
+                if (mobileAndTabletCheck()) {
+                  renderInfo(el)
+                }
+                setString(el.name)
+                setResult([])
+              }}
+            >
+              {el.name}-{el.date}
+            </li>
+          ))}
+        </ul>
+      </SearchResult>
     </SearchContainer>
   )
 }
