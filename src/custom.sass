@@ -1,11 +1,30 @@
-// @import "~bootstrap/scss/bootstrap"
+@import "~bootstrap/scss/functions"
+@import "~bootstrap/scss/variables"
+@import "~bootstrap/scss/mixins"
+
+$theme-colors-rgb: map-loop($theme-colors, to-rgb, "$value")
+
+@import "~bootstrap/scss/root"
+@import "~bootstrap/scss/maps"
+@import "~bootstrap/scss/utilities"
+@import "~bootstrap/scss/reboot"
+
+@import "~bootstrap/scss/modal"
+@import "~bootstrap/scss/tables"
 
 html, body, #root
   height: 100%
   margin: 0
   padding: 0
+  position: relative
   width: 100%
 
 .forest
   height: 100%
+  position: relative
   width: 100%
+  z-index: 1
+
+.cursor
+  &:hover
+    cursor: pointer

@@ -1,11 +1,24 @@
 import * as THREE from 'three'
+import get from 'lodash/fp/get'
+import isEmpty from 'lodash/fp/isEmpty'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
-//import * as dat from 'dat.gui'
+import { gsap, Power2 } from 'gsap'
+import { Modal } from 'bootstrap'
+
+import { Ilist } from '../types'
+
+import list from './example.json'
 
 // global
 let ref: HTMLDivElement
-//const gui = new dat.GUI()
+let modal: Modal
+const timeline = gsap.timeline({
+  defaults: {
+    duration: 2,
+    ease: Power2.easeOut,
+  },
+})
 
 // camera and scene
 const scene = new THREE.Scene()
@@ -48,24 +61,42 @@ window.addEventListener('resize', resize)
 const DL = new THREE.DirectionalLight(0xffffff, 2.5)
 DL.castShadow = true
 const AO = new THREE.AmbientLight(0xffffff, 1.0)
+const SL = new THREE.SpotLight(0xffffff, 20, 20, Math.PI / 12)
+SL.position.set(0, 20, 0)
+
+// Modal content
+const renderInfo = (info: Ilist) => {
+  console.log(info)
+  const nameModal = document.getElementById('info-modal-name') as HTMLElement
+  const dateModal = document.getElementById('info-modal-date') as HTMLElement
+  const modelModal = document.getElementById('info-modal-model') as HTMLElement
+
+  nameModal.innerText = info.name
+  dateModal.innerText = info.date
+  modelModal.innerText = info.model
+
+  modal.show()
+}
 
 // Raycaster
 const raycaster = new THREE.Raycaster()
 const pointer = new THREE.Vector2(-100, -100)
 let count = 0
 let interval: NodeJS.Timeout
-const handlePointerDown = (event: globalThis.MouseEvent) => {
-  event.preventDefault()  
+const handlePointerDown = () => {
   interval = setInterval(() => count += 100, 100)
 }
 const handlePointerUp = (event: globalThis.MouseEvent) => {
   event.preventDefault()
-  if (count < 500) {
+
+  if (count < 200 && get('target.tagName', event) === 'CANVAS') {
     raycaster.setFromCamera( pointer, camera )
     const intersects = raycaster.intersectObjects( scene.children, true )
     if(intersects.length > 0) {
-      const current = intersects[0].object.parent
-      alert(`${current?.name}: ${JSON.stringify(current?.userData)}`)
+      const userData = intersects[0].object.parent?.userData
+      if (!isEmpty(userData)) {
+        renderInfo(userData as Ilist)
+      }
     }
 
   }
@@ -119,8 +150,8 @@ const addLights = (quantity: number) => {
   DL.shadow.mapSize.y = quantity < 96 ? 1024 : 2048
 
   scene.add(DL)
-  // scene.add(new THREE.CameraHelper(DL.shadow.camera))
-  scene.add(AO) 
+  scene.add(AO)
+  scene.add(SL)
 }
 
 const addTrees = (gltf: GLTF, quantity: number) => {
@@ -134,10 +165,10 @@ const addTrees = (gltf: GLTF, quantity: number) => {
 
   let sum = 1
   let count = 1
-  for (let i = 1; i <= quantity; i+=1) {
+  for (let i = 0; i < quantity; i += 1) {
     const newTree = model.clone()
-    newTree.name = `ARBOL NUMERO ${i + 1}`
-    newTree.userData = { name: 'Juan Sanchez', model: 'Tesla', date: '15/02/2022' }
+    newTree.name = `Tree-${list[i].id}`
+    newTree.userData = list[i]
 
     if (auxLimit === radius) {
       sum = -1
@@ -184,31 +215,14 @@ const addTrees = (gltf: GLTF, quantity: number) => {
   }  
   scene.add(trees)
 
-
+  // center cube
   const cube = new THREE.Mesh(
     new THREE.BoxGeometry(32.5, 2, 32.5),
     new THREE.MeshBasicMaterial({ color: 0x007ba9 })
   )
   cube.position.y = -1
   scene.add(cube)
-  /*
-  gui
-    .add(cube.position, 'x')
-    .min(0)
-    .max(50)
-    .step(0.5)
-  gui 
-    .add(cube.position, 'y')
-    .min(-10)
-    .max(50)
-    .step(0.1)
-  gui
-    .add(cube.position, 'z')
-    .min(0)
-    .max(50)
-    .step(0.5)
-  */
-
+  
   castAndReceiveShadows()
   addLights(quantity)
 }
@@ -218,18 +232,48 @@ const gltfLoader = new GLTFLoader()
 gltfLoader.load(
   './assets/TreeSample_GLTF/Tree_Sample.gltf',
   gltf => {
-    addTrees(gltf, 336)
+    addTrees(gltf, list.length)
   },
 )
+
 
 export const initForest = (cont: HTMLDivElement) => {
   ref = cont
   resize()
   cont.appendChild(renderer.domElement)
+
+  const modalElement = document.getElementById('tree-info-modal')
+  const closeModal = document.getElementById('close-modal')
+  if (modalElement && closeModal) {
+    modal = new Modal(modalElement, {})
+    closeModal.addEventListener('click', () => modal.hide())
+  }
 }
 
 export const cleanup = (cont: HTMLDivElement) => {
   renderer.dispose()
   scene.clear()
   cont.removeChild(renderer.domElement)
+}
+
+export const focusTree = (item: Ilist) => {
+  scene.traverse( obj => {
+    const { type, name } = obj    
+    if (type === 'Group' && name === `Tree-${item.id}`) {
+      console.log(obj.position);
+      
+      timeline.to(camera.position, {
+        x: obj.position.x,
+        z: obj.position.z,
+        y: -40,
+      })
+
+      SL.position.set(
+        obj.position.x,
+        20,
+        obj.position.z,
+      )
+      SL.target = obj
+    }
+  })
 }
